@@ -22,6 +22,9 @@ private:
 	Piece heldPiece;
 	int userScore;
 
+	// Useful for improving line-clear efficiency
+	vector<int> blocksPerRow;
+
 	// dv is delta v
 	bool moveVAllowed(int dv);
 	
@@ -35,9 +38,13 @@ private:
 
 	void reset();
 
-	void print();
+	void print(bool alreadyOnBoard = false);
 
 	void checkFilledLines();
+
+	void clearRows(vector<int>& rowsToClear);
+
+	vector<int> getRowsToClear();
 
 
 public:
@@ -70,6 +77,7 @@ public:
 				}
 				else {
 					// TODO: get move from outside
+					move = autoMover->makeMove();
 				}
 
 				// Cover selected moves

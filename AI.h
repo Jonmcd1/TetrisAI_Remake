@@ -4,20 +4,43 @@
 #include "Utility.h"
 #include "Game.h"
 #include <queue>
+#include <stack>
 using namespace std;
 
 class AI {
 private:
+	// The game itself
 	Game* game = nullptr;
+
+	// Game info
+	int topWithCell = BOTTOM_ROW_HEIGHT;
+	vector<int>& blocksPerRow = game->blocksPerRow;
+	vector<vector<int>>& board = game->gameBoard;
+
+	// Saved stack of moves
+	stack<char> moves;
+
 
 	int gensDone = 0;
 
-	int topWithCell = 23;
-
 public:
-	AI(Game* gameIn) : game(gameIn) {}
+	AI(Game* gameIn) : game(gameIn) {
+		for (int row = BOTTOM_ROW_HEIGHT; row >= 0; row--) {
+			if (gameIn->blocksPerRow[row] != 0) {
+				topWithCell = row;
+			}
+		}
+	}
 
-	vector<char> findDrops();
+	void findDrops();
+
+	// Assumes the piece is in position to be placed on board
+	double evaluatePosition();
+
+	// Fills the rows at the specified indices with tiles
+	void fillRows(vector<int>& rowsToFill);
+
+	char makeMove();
 };
 
 /*

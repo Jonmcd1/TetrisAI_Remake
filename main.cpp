@@ -16,7 +16,7 @@ void aiSelected();
 int main() {
 	Game game;
 	
-	do {
+	while (true) {
 		cout << "Enter mode (type the number): \n"
 			<< "   1) Normal game\n"
 			<< "   2) AI mode\n"
@@ -26,14 +26,12 @@ int main() {
 		getline(cin, mode);
 
 		if (mode == "1") {
-			// TODO
 			game.run<AI>(false);
 		}
 		else if (mode == "2") {
-			// TODO
-			// aiSelected(game);
 			AI gameAI(&game);
-			gameAI.findDrops();
+			// TODO
+			game.run<AI>(true, &gameAI);
 		}
 		else if (mode == "3") {
 			cout << "Exited Program!";
@@ -42,7 +40,7 @@ int main() {
 		else {
 			cout << "Error on input mode. Please type '1', '2', or '3'\n";
 		}
-	} while (true);
+	}
 
 
 	return 0;

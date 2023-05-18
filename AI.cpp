@@ -9,14 +9,25 @@ struct BfsCoords {
 	BfsCoords(int dI, int vI, int hI) : d(dI), v(vI), h(hI) {}
 };
 
-
-vector<char> AI::findDrops() {
+// FIXME: make sure topWithCell gets updated
+// FIXME: I think I can save computation time by labeling impossible positions with 'X'
+	// (So as to prevent repeated collision checks)
+void AI::findDrops() {
 	// TODO: Track which final state is best and backtrack to get
 	// the input route to it
 
-	BfsCoords currBest(0,1,6);
+	BfsCoords currBest(0, 1, 6);
 	double currBestCost = std::numeric_limits<double>::infinity();
 
+
+	/* Map key: 
+	* S is "start"
+	* R is "got here by moving right" 
+	* L is "got here by moving left"
+	* T is "got here by tilting"
+	* D is "got here by moving down"
+	* W is "got here by waiting"
+	*/
 	// [Depth][Vert][Horiz]
 	// V and H match the V and H of the gameBoard
 	// D is the current rotation of the piece, from 0 - 3
@@ -25,6 +36,7 @@ vector<char> AI::findDrops() {
 
 	// Load start pos into queue
 	queue<BfsCoords> bfsQueue;
+
 	if (topWithCell > 3) {
 		currBest = { 0, topWithCell - 3, 6 };
 
@@ -37,58 +49,187 @@ vector<char> AI::findDrops() {
 		bfsMap[0][1][6] = 'S';
 	}
 
-	Piece& tempP = game->currPiece;
+
+
+	Piece& piece = game->currPiece;
 	while (!bfsQueue.empty()) {
-		BfsCoords& tempC = bfsQueue.front();
-		// FIXME?: I think setting the rotation has a bug
-		tempP.newPiece(tempP.pieceIdx, tempC.d, tempC.v, tempC.h);
+		BfsCoords& coords = bfsQueue.front();
+		piece.newPiece(piece.pieceIdx, coords.d, coords.v, coords.h);
 
 		if (!(game->moveVAllowed(1))) {
-			// TODO - evaluate position, as this is a final state
+			double thisCost = evaluatePosition();
+			// Lower cost is better
+			if (thisCost < currBestCost) {
+				currBestCost = thisCost;
+				currBest = coords;
+			}
 		}
 
 		// R
 		if (game->moveHAllowed(1)
-			&& (tempC.h + 1) < BOARD_WIDTH
-			&& bfsMap[tempC.d][tempC.v][tempC.h + 1] == '-') {
-			bfsQueue.push({ tempC.d, tempC.v, tempC.h + 1 });
-			bfsMap[tempC.d][tempC.v][tempC.h + 1] = 'R';
+			&& (coords.h + 1) < BOARD_WIDTH
+			&& bfsMap[coords.d][coords.v][coords.h + 1] == '-') {
+			bfsQueue.push({ coords.d, coords.v, coords.h + 1 });
+			bfsMap[coords.d][coords.v][coords.h + 1] = 'R';
 		}
 		// L
 		if (game->moveHAllowed(-1) 
-			&& (tempC.h - 1) >= 0
-			&& bfsMap[tempC.d][tempC.v][tempC.h - 1] == '-') {
-			bfsQueue.push({ tempC.d, tempC.v, tempC.h - 1 });
-			bfsMap[tempC.d][tempC.v][tempC.h - 1] = 'L';
+			&& (coords.h - 1) >= 0
+			&& bfsMap[coords.d][coords.v][coords.h - 1] == '-') {
+			bfsQueue.push({ coords.d, coords.v, coords.h - 1 });
+			bfsMap[coords.d][coords.v][coords.h - 1] = 'L';
 		}
 		// T
 		if (game->moveRAllowed(1) 
-			&& bfsMap[(tempC.d + 1) % 4][tempC.v][tempC.h] == '-') {
-			bfsQueue.push({ (tempC.d + 1) % 4, tempC.v, tempC.h });
-			bfsMap[(tempC.d + 1) % 4][tempC.v][tempC.h] = 'T';
+			&& bfsMap[(coords.d + 1) % 4][coords.v][coords.h] == '-') {
+			bfsQueue.push({ (coords.d + 1) % 4, coords.v, coords.h });
+			bfsMap[(coords.d + 1) % 4][coords.v][coords.h] = 'T';
 		}
 		// D
-		// FIXME?: moveVAllowed(2) may skip over a collision
-		if (game->moveVAllowed(2) 
-			&& (tempC.v + 2) < BOARD_HEIGHT
-			&& bfsMap[tempC.d][tempC.v + 2][tempC.h] == '-') {
-			bfsQueue.push({ tempC.d, tempC.v + 2, tempC.h });
-			bfsMap[tempC.d][tempC.v + 2][tempC.h] = 'D';
+		if (game->moveVAllowed(1)
+			&& game->moveVAllowed(2) 
+			&& (coords.v + 2) < BOARD_HEIGHT
+			&& bfsMap[coords.d][coords.v + 2][coords.h] == '-') {
+			bfsQueue.push({ coords.d, coords.v + 2, coords.h });
+			bfsMap[coords.d][coords.v + 2][coords.h] = 'D';
 		}
 		// Waiting
 		if (game->moveVAllowed(1) 
-			&& (tempC.v + 1) < BOARD_HEIGHT
-			&& bfsMap[tempC.d][tempC.v + 1][tempC.h] == '-') {
-			bfsQueue.push({ tempC.d, tempC.v + 1, tempC.h });
-			bfsMap[tempC.d][tempC.v + 1][tempC.h] = 'W';
+			&& (coords.v + 1) < BOARD_HEIGHT
+			&& bfsMap[coords.d][coords.v + 1][coords.h] == '-') {
+			bfsQueue.push({ coords.d, coords.v + 1, coords.h });
+			bfsMap[coords.d][coords.v + 1][coords.h] = 'W';
 		}
 
 		bfsQueue.pop();
 	}
 	// Put it back after testing
-	tempP.newPiece(tempP.pieceIdx, 0, 1, 6);
+	piece.newPiece(piece.pieceIdx, 0, 1, 6);
 
-	return { ' ' };
+
+	/* TESTING */
+	// print3DMap(bfsMap);
+
+
+
+	// Find the route to the best position via backtracking
+	// FIXME: The code below fails to account for S being offset down
+	// FIXME: The code below fails to make the final waiting move to 
+		// finalize the piece position
+	BfsCoords currPos = currBest;
+	while (true) {
+		char& currChar = bfsMap[currPos.d][currPos.v][currPos.h];
+
+		if (currChar == 'S') {
+			break;
+		}
+
+		moves.push(currChar);
+
+		if (currChar == 'R') {
+			currPos.h -= 1;
+		}
+		else if (currChar == 'L') {
+			currPos.h += 1;
+		}
+		else if (currChar == 'T') {
+			currPos.d -= 1;
+		}
+		else if (currChar == 'D') {
+			currPos.v -= 2;
+		}
+		else if (currChar == 'W') {
+			currPos.v -= 1;
+		}
+		else {
+			cout << "This is impossible, how did you get here?\n";
+			exit(1);
+		}
+	}
+}
+
+// TODO: Write
+// Assumes piece is in position but hasn't been added to the board yet
+double AI::evaluatePosition() {
+	// Load in the piece
+	for (auto coord : game->currPiece.occupiedSpaces) {
+		board[coord.first][coord.second] = 1;
+		blocksPerRow[coord.first]++;
+	}
+	vector<int> clears = game->getRowsToClear();
+	game->clearRows(clears);
+
+
+	int rowsCleared = clears.size();
+	// TODO: eval
+
+	/* Factors to weigh:
+	* top height
+	* bumpiness (height diff between each column)
+	* # of holes
+	* # of tiles above holes
+	* # of lines cleared
+	* # of cells in "holes" (bumps) that are 1 cell wide (hard to clear)
+	* I-block held or not
+	*/
+
+
+	
+	// Unload the piece
+	fillRows(clears);
+	for (auto coord : game->currPiece.occupiedSpaces) {
+		board[coord.first][coord.second] = 0;
+		blocksPerRow[coord.first]--;
+	}
+
+	return 0.0; // Filler
+}
+
+void AI::fillRows(vector<int>& rowsToFill) {
+	// Some basics
+	if (rowsToFill.empty()) {
+		return;
+	}
+	sort(rowsToFill.begin(), rowsToFill.end());
+
+	// Go down the board from the top until all rows to fill have been filled
+	// (All rows beyond those can stay unchanged)
+	int fillCount = rowsToFill.size();
+	for (int rHigher = 0, filled = 0;
+		filled < fillCount;
+		rHigher++) {
+		// If we're currently at a row to be filled
+		if (rHigher == rowsToFill[filled]) {
+			// Fill it
+			board[rHigher] = vector<int>(BOARD_WIDTH, 1);
+			blocksPerRow[rHigher] = BOARD_WIDTH;
+			filled++;
+		}
+		// Otherwise, bring the row that is X rows down up to the current row
+		// X is the number of rows that have yet to be filled
+		else {
+			swap(board[rHigher], board[rHigher + (fillCount - filled)]);
+			swap(blocksPerRow[rHigher], blocksPerRow[rHigher + (fillCount - filled)]);
+		}
+	}
+}
+
+// TODO: Finalize
+char AI::makeMove() {
+	if (moves.empty()) {
+		if (game->currPiece.occupiedSpaces[0].first != 1
+			|| game->currPiece.occupiedSpaces[0].second != 6) {
+			cout << "Finding drops for a piece not in the start position"
+				<< " isn't allowed.\n";
+			exit(1);
+		}
+
+		findDrops();
+	}
+
+	char move = moves.top();
+	moves.pop();
+	return move;
 }
 
 /*

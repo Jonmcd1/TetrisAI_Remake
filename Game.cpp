@@ -7,6 +7,46 @@ Game::Game() {
 	currPiece.newPiece();
 	heldPiece.newPiece();
 	userScore = 0;
+
+	blocksPerRow = vector<int>(BOARD_HEIGHT, 0);
+
+	/* TESTING */
+	/*
+	gameBoard = {
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,0,0,0,0,0},
+		{0,0,0,0,0,0,0,1,0,0,0,0},
+		{1,1,1,1,1,1,1,1,0,0,1,1},
+		{1,1,1,1,1,1,1,1,0,0,1,1},
+		{1,1,1,1,1,0,1,1,0,0,1,1}
+	};
+
+	for (int row = 0; row < BOARD_HEIGHT; row++) {
+		int count = 0;
+		for (int col = 0; col < BOARD_WIDTH; col++) {
+			blocksPerRow[row] += gameBoard[row][col];
+		}
+	}
+	*/
+	
 }
 
 void Game::reset() {
@@ -21,10 +61,12 @@ void Game::reset() {
 	userScore = 0;
 }
 
-void Game::print() {
-	// FIXME: Likely spot for bugs
-	for (auto coord : currPiece.occupiedSpaces) {
-		gameBoard[coord.first][coord.second] = 1;
+// alreadyOnBoard refers ot the currPiece already being on the board
+void Game::print(bool alreadyOnBoard) {
+	if (!alreadyOnBoard) {
+		for (auto coord : currPiece.occupiedSpaces) {
+			gameBoard[coord.first][coord.second] = 1;
+		}
 	}
 
 	cout << "\nHeld Piece: " << heldPiece.pieceChar << "\n";
@@ -54,8 +96,10 @@ void Game::print() {
 	}
 	cout << "\nScore: " << userScore << "\n";
 
-	for (auto coord : currPiece.occupiedSpaces) {
-		gameBoard[coord.first][coord.second] = 0;
+	if (!alreadyOnBoard) {
+		for (auto coord : currPiece.occupiedSpaces) {
+			gameBoard[coord.first][coord.second] = 0;
+		}
 	}
 
 	return;
@@ -63,48 +107,13 @@ void Game::print() {
 
 void Game::checkFilledLines() {
 	// The piece position is accurate. Use it to check filled lines.
+	// Assumes the piece has already been placed on the board.
 
 	// Get rows that were added to
-	vector<int> rCheck;
-	for (auto cell : currPiece.occupiedSpaces) {
-		if (find(rCheck.begin(), rCheck.end(), cell.first) == rCheck.end()) {
-			rCheck.push_back(cell.first);
-		}
-	}
+	vector<int> rClear = getRowsToClear();
+	clearRows(rClear);
 
-	// Check if those rows are full; remove if not
-	for (int i = rCheck.size() - 1; i >= 0; i--) {
-		for (int cell : gameBoard[rCheck[i]]) {
-			if (cell == 0) {
-				//FIXME?: Erasing without having i account for it
-				rCheck.erase(rCheck.begin() + i);
-				break;
-			}
-		}
-	}
-
-	// Time-saver
-	if (!rCheck.empty()) {
-		// Add to score
-		userScore += rCheck.size() * rCheck.size() * 100;
-
-		// Move the rows
-		// Row width has almost no effect on this timing
-		sort(rCheck.begin(), rCheck.end(), greater<int>());
-		for (int rMove = BOARD_HEIGHT - 1,
-			rCurr = BOARD_HEIGHT - 1,
-			compI = 0;
-			rMove >= 0; rMove--) {
-			if (compI >= rCheck.size() || rMove != rCheck[compI]) {
-				swap(gameBoard[rMove], gameBoard[rCurr]);
-				rCurr--;
-			}
-			else {
-				gameBoard[rMove] = vector<int>(BOARD_WIDTH, 0);
-				compI++;
-			}
-		}
-	}
+	userScore += rClear.size() * rClear.size() * 100;
 }
 
 bool Game::moveVAllowed(int dv) {
@@ -183,9 +192,61 @@ bool Game::moveRAllowed(int turns) {
 void Game::placePiece() {
 	for (auto coord : currPiece.occupiedSpaces) {
 		gameBoard[coord.first][coord.second] = 1;
+		blocksPerRow[coord.first]++;
 	}
 }
 
+// Assumes the piece has already been placed on the board.
+vector<int> Game::getRowsToClear() {
+	vector<int> output;
+	for (auto cell : currPiece.occupiedSpaces) {
+		if (blocksPerRow[cell.first] == BOARD_WIDTH
+			&& find(output.begin(), output.end(), cell.first) == output.end()) {
+			output.push_back(cell.first);
+		}
+	}
+	return output;
+}
+
+void Game::clearRows(vector<int>& rowsToClear) {
+	// FIXME: this should already be dealt with
+	// Check if those rows are full; remove if not
+	/*
+	for (int i = rowsToClear.size() - 1; i >= 0; i--) {
+		for (int cell : gameBoard[rowsToClear[i]]) {
+			if (cell == 0) {
+				//FIXME?: Erasing without having i account for it
+				rowsToClear.erase(rowsToClear.begin() + i);
+				break;
+			}
+		}
+	}
+	*/
+
+	// Time-saver
+	if (rowsToClear.empty()) {
+		return;
+	}
+
+	// Move the rows
+	// Row width has almost no effect on this timing
+	sort(rowsToClear.begin(), rowsToClear.end(), greater<int>());
+	for (int rMove = BOARD_HEIGHT - 1,
+		rCurr = BOARD_HEIGHT - 1,
+		compI = 0;
+		rMove >= 0; rMove--) {
+		if (compI >= rowsToClear.size() || rMove != rowsToClear[compI]) {
+			swap(gameBoard[rMove], gameBoard[rCurr]);
+			swap(blocksPerRow[rMove], blocksPerRow[rCurr]);
+			rCurr--;
+		}
+		else {
+			gameBoard[rMove] = vector<int>(BOARD_WIDTH, 0);
+			blocksPerRow[rMove] = 0;
+			compI++;
+		}
+	}
+}
 
 /*
 

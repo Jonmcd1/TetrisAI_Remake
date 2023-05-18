@@ -50,7 +50,6 @@ void Piece::moveR(int turns) {
 		for (int i = 1; i < occupiedSpaces.size(); i++) {
 			pair<int, int>& cell = occupiedSpaces[i];
 
-			// FIXME: This looks impossible
 			cell.first = pivot.first - (cell.first - pivot.first);
 			cell.second = pivot.second - (cell.second - pivot.second);
 		}
