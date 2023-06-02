@@ -20,13 +20,16 @@ private:
 
 	// (0, 0) is top-left
 	// The 4 tiles occupied in {vertical, horizontal} form
-	vector<pair<int, int>> occupiedSpaces;
+	vector<Coord> occupiedSpaces;
+
+	// For debugging
+	int currRotation = 0;
 
 	// Piece bank
 	// A vector of piece data, each datum of which is an ID char
 	// paired with a vector of starting cell positions
 	// The first cell position is the pivot cell
-	vector<pair<char, vector<pair<int, int>>>> pieceBank = {
+	vector<pair<char, vector<Coord>>> pieceBank = {
 		{'I', { {1,6}, {0,6}, {2,6}, {3,6} }},
 		{'L', { {1,6}, {0,6}, {2,6}, {2,7} }},
 		{'T', { {1,6}, {0,6}, {0,5}, {0,7} }},
@@ -44,12 +47,8 @@ public:
 	// Places the pivot at the specified coords
 	void newPiece(int idx, int r, int v, int h);
 
-	void moveV(int dv);
 
-	void moveH(int dh);
-
-	// Counterclockwise by 90 degrees
-	void moveR(int turns);
+	void move(int dv, int dh, int turns);
 };
 
 #endif

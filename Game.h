@@ -28,14 +28,8 @@ private:
 	// Extra data
 	int topRowWithBlock;
 
-	// dv is delta v
-	bool moveVAllowed(int dv);
-	
-	// dh is delta h (horizontal)
-	bool moveHAllowed(int dh);
-
-	// Rotation counterclockwise 90 degrees
-	bool moveRAllowed(int turns);
+	// Debugging
+	int piecesPlaced = 0;
 
 	void placePiece();
 
@@ -43,11 +37,16 @@ private:
 
 	void print(bool alreadyOnBoard = false);
 
-	void checkFilledLines();
+	void processFilledLines();
 
 	void clearRows(vector<int>& rowsToClear);
 
 	vector<int> getRowsToClear();
+
+	// dv = delta vertical, dh = delta horizontal, turns = turns
+	bool moveAllowed(int dv, int dh, int turns);
+
+	bool checkValidPos(vector<Coord>& testCoords);
 
 
 public:
@@ -62,7 +61,7 @@ public:
 			currPiece.newPiece();
 
 			// Exit if game is lost
-			if (!moveVAllowed(0)) {
+			if (!moveAllowed(0, 0, 0)) {
 				if (!autoMode) {
 					cout << "\n\nGame Over!\n"
 						<< "-=+ Your final score: " << userScore
@@ -79,12 +78,7 @@ public:
 					getline(cin, move);
 				}
 				else {
-					// TODO: get move from outside
-					//print();
 					move = autoMover->makeMove();
-
-					//string junk;
-					//getline(cin, junk);
 				}
 
 				// Cover selected moves
@@ -94,29 +88,29 @@ public:
 					continue;
 				}
 
-				if (move == "L" && moveHAllowed(-1)) {
-					currPiece.moveH(-1);
+				if (move == "L" && moveAllowed(0, -1, 0)) {
+					currPiece.move(0, -1, 0);
 					continue;
 				}
 
-				if (move == "R" && moveHAllowed(1)) {
-					currPiece.moveH(1);
+				if (move == "R" && moveAllowed(0, 1, 0)) {
+					currPiece.move(0, 1, 0);
 					continue;
 				}
 
-				if (move == "T" && moveRAllowed(1)) {
-					currPiece.moveR(1);
+				if (move == "T" && moveAllowed(0, 0, 1)) {
+					currPiece.move(0, 0, 1);
 					continue;
 				}
 
-				if (move == "D" && moveVAllowed(1)) {
-					currPiece.moveV(1);
+				if (move == "D" && moveAllowed(1, 0, 0)) {
+					currPiece.move(1, 0, 0);
 				}
 
 				// In case of idle or D selection, move the piece down
 				// and check if this ends the piece's turn
-				if (moveVAllowed(1)) {
-					currPiece.moveV(1);
+				if (moveAllowed(1, 0, 0)) {
+					currPiece.move(1, 0, 0);
 				}
 				else {
 					placePiece();
@@ -128,7 +122,7 @@ public:
 				}
 			} // finish this piece
 
-			checkFilledLines();
+			processFilledLines();
 
 		} // finish this game
 	}

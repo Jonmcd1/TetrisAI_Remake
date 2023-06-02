@@ -4,14 +4,13 @@
 // #include <chrono>
 // #include <thread>
 
-#include "Utility.h"
 #include "AI.h"
 #include "Game.h"
+#include "Utility.h"
 using namespace std;
 // using namespace std::this_thread; // sleep_for, sleep_until
 // using namespace std::chrono; // nanoseconds, system_clock, seconds
 
-void aiSelected();
 
 int main() {
 	Game game;
@@ -30,7 +29,6 @@ int main() {
 		}
 		else if (mode == "2") {
 			AI gameAI(&game);
-			// TODO
 			game.run<AI>(true, &gameAI);
 		}
 		else if (mode == "3") {

@@ -4,7 +4,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-using namespace std;
 
 const int BOARD_WIDTH = 12;
 const int BOARD_HEIGHT = 24;
@@ -18,16 +17,38 @@ const int GENERATION_POPULATION = 60;
 const int COST_FACTOR_COUNT = 10;
 const int MAX_COST_FACTOR = 200;
 
+const int AI_FEATURE_COUNT = 8;
+
+
+struct Coord {
+	int vert = -1;
+	int horiz = -1;
+};
+
+struct BfsCoords {
+	int d;
+	int v;
+	int h;
+
+	BfsCoords(int dI, int vI, int hI) : d(dI), v(vI), h(hI) {}
+};
+
+
+// Turns are counterclockwise
+// First coord in vector is assumed to be the pivot
+void moveCoords(std::vector<Coord>& vec, int dv, int dh, int turns);
+
+
 template <typename T>
-void print3DMap(vector<vector<vector<T>>>& map) {
+void print3DMap(std::vector<std::vector<std::vector<T>>>& map) {
 	for (auto layer : map) {
 		for (auto row : layer) {
 			for (auto cell : row) {
-				cout << cell;
+				std::cout << cell;
 			}
-			cout << "\n";
+			std::cout << "\n";
 		}
-		cout << "\n\n\n";
+		std::cout << "\n\n\n";
 	}
 
 	return;
