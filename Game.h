@@ -14,7 +14,10 @@ using namespace std;
 
 class Game {
 private:
+	int gameCount = 0;
+
 	friend class AI;
+	friend class AITrainer;
 
 	// Top left is (0,0), as in (vert, horiz)
 	vector<vector<int>> gameBoard;
@@ -46,6 +49,8 @@ private:
 	// dv = delta vertical, dh = delta horizontal, turns = turns
 	bool moveAllowed(int dv, int dh, int turns);
 
+	bool swapAllowed();
+
 	bool checkValidPos(vector<Coord>& testCoords);
 
 
@@ -61,7 +66,7 @@ public:
 			currPiece.newPiece();
 
 			// Exit if game is lost
-			if (!moveAllowed(0, 0, 0)) {
+			if (!moveAllowed(0, 0, 0) || piecesPlaced > 2000) {
 				if (!autoMode) {
 					cout << "\n\nGame Over!\n"
 						<< "-=+ Your final score: " << userScore
@@ -82,7 +87,7 @@ public:
 				}
 
 				// Cover selected moves
-				if (move == "S") {
+				if (move == "S" && swapAllowed()) {
 					swap(currPiece, heldPiece);
 					heldPiece.newPiece(heldPiece.pieceIdx, 0, 1, 6);
 					continue;
@@ -114,9 +119,6 @@ public:
 				}
 				else {
 					placePiece();
-					print(true);
-					string junk;
-					getline(cin, junk);
 
 					break;
 				}

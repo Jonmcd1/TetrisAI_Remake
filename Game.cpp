@@ -16,6 +16,7 @@ void Game::reset() {
 	heldPiece.newPiece();
 
 	userScore = 0;
+	piecesPlaced = 0;
 
 	/* TESTING */
 	/*
@@ -243,6 +244,11 @@ bool Game::moveAllowed(int dv, int dh, int turns) {
 
 	// Move is valid if no invalidity was detected
 	return true;
+}
+
+bool Game::swapAllowed() {
+	vector<Coord> testCoords = heldPiece.occupiedSpaces;
+	return checkValidPos(testCoords);
 }
 
 // Returns true if the positions of the cells in testCoords are valid

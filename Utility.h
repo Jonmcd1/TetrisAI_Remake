@@ -10,27 +10,22 @@ const int BOARD_HEIGHT = 24;
 const int BOTTOM_ROW_HEIGHT = BOARD_HEIGHT - 1;
 const int PIECE_SIZE = 4;
 
-const int POSSIBLE_MOVE_COUNT = 96;
-const int MAX_MOVE_LENGTH = 10;
+//const int POSSIBLE_MOVE_COUNT = 96;
+//const int MAX_MOVE_LENGTH = 10;
 
-const int GENERATION_POPULATION = 60;
-const int COST_FACTOR_COUNT = 10;
-const int MAX_COST_FACTOR = 200;
+//const int GENERATION_POPULATION = 60;
+//const int COST_FACTOR_COUNT = 10;
+//const int MAX_COST_FACTOR = 200;
 
 const int AI_FEATURE_COUNT = 8;
+
+const int GENERATION_SIZE = 45;
+const int WINNER_COUNT = 6;
 
 
 struct Coord {
 	int vert = -1;
 	int horiz = -1;
-};
-
-struct BfsCoords {
-	int d;
-	int v;
-	int h;
-
-	BfsCoords(int dI, int vI, int hI) : d(dI), v(vI), h(hI) {}
 };
 
 

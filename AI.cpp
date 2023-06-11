@@ -1,6 +1,8 @@
 #include "AI.h"
 using namespace std;
 
+
+
 char AI::makeMove() {
 	// This means a piece has been placed
 	if (moves.empty()) {
@@ -29,11 +31,19 @@ void AI::getMovePath() {
 	double costWithoutSwap = findBestDrop(pathWithoutSwap);
 
 	// Find path and cost with swapping pieces
-	swap(game->currPiece, game->heldPiece);
 	stack<char> pathWithSwap;
-	double costWithSwap = findBestDrop(pathWithSwap);
-	pathWithSwap.push('S');
-	swap(game->currPiece, game->heldPiece);
+	double costWithSwap = std::numeric_limits<double>::infinity();
+
+	if (game->swapAllowed()) {
+		swap(game->currPiece, game->heldPiece);
+		game->heldPiece.newPiece(game->heldPiece.pieceIdx, 0, 1, 6);
+
+		costWithSwap = findBestDrop(pathWithSwap);
+		pathWithSwap.push('S');
+
+		swap(game->currPiece, game->heldPiece);
+		game->heldPiece.newPiece(game->heldPiece.pieceIdx, 0, 1, 6);
+	}
 
 	// Set the moves path
 	if (costWithoutSwap < costWithSwap) {
@@ -107,8 +117,8 @@ double AI::findBestDrop(stack<char>& pathOfDrop) {
 		}
 
 		// Test all possible moves from this position
-		for (auto& move : moveSet) {
-			BfsCoords& moveCoords = move.second;
+		for (const auto& move : moveSet) {
+			const BfsCoords& moveCoords = move.second;
 
 			BfsCoords newCoords = {
 				(coords.d + moveCoords.d) % 4,
@@ -139,7 +149,7 @@ double AI::findBestDrop(stack<char>& pathOfDrop) {
 }
 
 // findBestDrop() helper
-void AI::backtrackPath(vector<vector<vector<char>>>& bfsMap, 
+void AI::backtrackPath(vector<vector<vector<char>>>& bfsMap,
 						BfsCoords& end, int startHeight,
 						stack<char>& path) {
 	// Final waiting move to trigger piece placement
@@ -192,7 +202,6 @@ void AI::backtrackPath(vector<vector<vector<char>>>& bfsMap,
 
 
 // findBestDrop() helper
-// TODO: Write
 double AI::evaluatePosition(int rowsCleared) {
 	/* Factors to weigh:
 	* top height

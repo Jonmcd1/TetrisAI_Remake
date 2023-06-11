@@ -5,6 +5,7 @@
 // #include <thread>
 
 #include "AI.h"
+#include "AITrainer.h"
 #include "Game.h"
 #include "Utility.h"
 using namespace std;
@@ -17,7 +18,7 @@ int main() {
 	
 	while (true) {
 		cout << "Enter mode (type the number): \n"
-			<< "   1) Normal game\n"
+			<< "   1) Play a normal game\n"
 			<< "   2) AI mode\n"
 			<< "   3) Exit\n"
 			<< "$ ";
@@ -28,11 +29,36 @@ int main() {
 			game.run<AI>(false);
 		}
 		else if (mode == "2") {
-			AI gameAI(&game);
-			game.run<AI>(true, &gameAI);
+			while (true) {
+				AI gameAI(&game);
+				
+				cout << "Enter AI mode (type the number): \n"
+					<< "   1) Watch an AI play\n"
+					<< "   2) Train AI\n"
+					<< "   3) Exit\n"
+					<< "$ ";
+				string aiMode;
+				getline(cin, aiMode);
+
+				if (aiMode == "1") {
+					game.run<AI>(true, &gameAI);
+				}
+				else if (aiMode == "2") {
+					AITrainer trainer(&gameAI);
+
+					trainer.runAITrainer(100, true, "outputOvernight.txt");
+				}
+				else if (aiMode == "3") {
+					cout << "Exited AI mode!\n";
+					break;
+				}
+				else {
+					cout << "Error on input mode. Please type '1', '2', or '3'\n";
+				}
+			}
 		}
 		else if (mode == "3") {
-			cout << "Exited Program!";
+			cout << "Exited Program!\n";
 			break;
 		}
 		else {

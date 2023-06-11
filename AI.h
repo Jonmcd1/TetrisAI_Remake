@@ -7,8 +7,18 @@
 #include <stack>
 using namespace std;
 
+struct BfsCoords {
+	int d;
+	int v;
+	int h;
+
+	BfsCoords(int dI, int vI, int hI) : d(dI), v(vI), h(hI) {}
+};
+
 class AI {
 private:
+	friend class AITrainer;
+
 	vector<pair<char, BfsCoords>> moveSet = {
 		{'R', {0, 0, 1}},
 		{'L', {0, 0, -1}},
@@ -110,6 +120,13 @@ private:
 public:
 	AI(Game* gameIn) : game(gameIn) {}
 
+	/*
+	* REQUIRES: game is awaiting a move
+	* MODIFIES: moves
+	* EFFECTS:	Returns and pops the top of the move stack if it isn't empty.
+	*			Finds the best sequence of next moves if it is empty.
+	* CALLS:    getMovePath
+	*/
 	char makeMove();
 };
 
