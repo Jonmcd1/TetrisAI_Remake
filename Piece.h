@@ -14,20 +14,19 @@ private:
 	friend class AI;
 	friend class Game;
 
-
-	char pieceChar = 'I';
+	/*** METADATA ***/
 	int pieceIdx = 0;
+	int currRotation = 0;
+	char pieceChar = 'I';
 
-	// (0, 0) is top-left
-	// The 4 tiles occupied in {vertical, horizontal} form
+
+	/*** OCCUPIED CELL COORDS ***/
+	// Coordinate (0, 0) is the top-left
 	vector<Coord> occupiedSpaces;
 
-	// For debugging
-	int currRotation = 0;
-
-	// Piece bank
-	// A vector of piece data, each datum of which is an ID char
-	// paired with a vector of starting cell positions
+	/*** PIECE BANK ***/
+	// Each element is an ID char
+	// paired with a vector of starting cell coordinates
 	// The first cell position is the pivot cell
 	vector<pair<char, vector<Coord>>> pieceBank = {
 		{'I', { {1,6}, {0,6}, {2,6}, {3,6} }},
@@ -40,14 +39,34 @@ private:
 
 public:
 
-	// Resets this piece with a random one
+	/*** INITIALIZERS ***/
+	/*
+	* REQUIRES: Nothing
+	* MODIFIES: pieceIdx, currRotation, pieceChar, occupiedSpaces
+	* EFFECTS:	Re-initializes this Piece to a random piece from 
+	*			pieceBank in its starting position
+	*/
 	void newPiece();
 
-	// Resets this piece with a specified one (by index in pieceBank)
-	// Places the pivot at the specified coords
+	/*
+	* REQUIRES: 0 <= idx < pieceBank.size()
+	* MODIFIES:	pieceIdx, currRotation, pieceChar, occupiedSpaces
+	* EFFECTS:	Re-initializes this Piece to a specified piece from 
+	*			pieceBank in a specified position/rotation; the pivot
+	*			is the cell that gets set to the specified coords
+	* CALLS:	move
+	*/
 	void newPiece(int idx, int r, int v, int h);
 
-
+	/*** MOVER ***/
+	/*
+	* REQUIRES: Nothing
+	* MODIFIES: currRotation, occupiedSpaces
+	* EFFECTS:	Moves the Piece's occupiedSpaces by dv vertically,
+	*			dh horizontally, and rotates it 90 degrees counterclockwise
+	*			<turns> times
+	* CALLS:	moveCoords (see Utility.cpp)
+	*/
 	void move(int dv, int dh, int turns);
 };
 

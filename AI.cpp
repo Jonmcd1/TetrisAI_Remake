@@ -2,7 +2,7 @@
 using namespace std;
 
 
-
+/*** OUTPUT ***/
 char AI::makeMove() {
 	// This means a piece has been placed
 	if (moves.empty()) {
@@ -24,6 +24,7 @@ char AI::makeMove() {
 }
 
 
+/*** DROP PATH FINDERS ***/
 // makeMove() helper
 void AI::getMovePath() {
 	// Find path and cost without swapping pieces
@@ -54,7 +55,7 @@ void AI::getMovePath() {
 	}
 }
 
-// findDrops() helper
+// getMovePath() helper
 double AI::findBestDrop(stack<char>& pathOfDrop) {
 	// max(topWithCell - 3, 1) is efficiency booster -- avoids unneeded paths
 	int startHeight = max(topWithCell - 3, 1);
@@ -200,7 +201,7 @@ void AI::backtrackPath(vector<vector<vector<char>>>& bfsMap,
 }
 
 
-
+/*** AI EVALUATOR ***/
 // findBestDrop() helper
 double AI::evaluatePosition(int rowsCleared) {
 	/* Factors to weigh:
@@ -301,6 +302,8 @@ double AI::evaluatePosition(int rowsCleared) {
 	return cost;
 }
 
+
+/*** BOARD MANIPULATION HELPERS ***/
 // evaluatePosition() helper; reverses a piece drop
 void AI::fillRows(vector<int>& rowsToFill) {
 	// Some basics

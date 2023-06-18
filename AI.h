@@ -16,7 +16,7 @@ struct BfsCoords {
 };
 
 class AI {
-private:
+public:
 	friend class AITrainer;
 
 	vector<pair<char, BfsCoords>> moveSet = {
@@ -44,6 +44,7 @@ private:
 	vector<double> weights = vector<double>(AI_FEATURE_COUNT, 1);
 
 
+	/*** DROP PATH FINDERS ***/
 	/* 
 	* REQUIRES: game->currPiece is in its starting position;
 	*			game->heldPiece exists;
@@ -55,7 +56,6 @@ private:
 	* CALLS:    findBestDrop
 	*/
 	void getMovePath();
-
 
 	/*
 	* REQUIRES: game->currPiece is in its starting position;
@@ -74,7 +74,6 @@ private:
 	*/
 	double findBestDrop(stack<char>& pathOfDrop);
 
-
 	/*
 	* REQUIRES: bfsMap is a map correctly computed by findBestDrop();
 	*			end is a coordinate that has been reached on bfsMap;
@@ -89,6 +88,7 @@ private:
 		stack<char>& path);
 
 
+	/*** AI EVALUATOR ***/
 	/*
 	* REQUIRES: The board state is valid; rowsCleared is the 
 	*			number of rows cleared by the last dropped piece
@@ -100,6 +100,7 @@ private:
 	double evaluatePosition(int rowsCleared);
 
 
+	/*** BOARD MANIPULATION HELPERS ***/
 	/*
 	* REQUIRES:	rowsToFill's ints are in the range [0, BOARD_HEIGHT);
 	*			the board has room to fill these rows
@@ -118,8 +119,11 @@ private:
 	void removePiece();
 
 public:
+	/*** CONSTRUCTOR ***/
 	AI(Game* gameIn) : game(gameIn) {}
 
+
+	/*** OUTPUT ***/
 	/*
 	* REQUIRES: game is awaiting a move
 	* MODIFIES: moves

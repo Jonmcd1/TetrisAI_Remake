@@ -1,19 +1,47 @@
 #include "AITrainer.h"
 using namespace std;
 
+/*** EVOLUTION FUNCTIONS ***/
+vector<IndividualAIVals> AITrainer::findWinners() {
+	// Tracks the top scorers from this generation
+	vector<IndividualAIVals> winners(WINNER_COUNT, IndividualAIVals());
 
-struct winnerTracker {
-	int idx = 0;
-	int score = 0;
+	// This just exists to avoid needing to copy a ton of lists of weights
+	vector<winnerTracker> topScores(WINNER_COUNT, { 0,0 });
 
-	bool operator<(const winnerTracker& other) {
-		return score < other.score;
+
+	// Initialize the winners; index 0 has the lowest score, 
+	// index WINNER_COUNT - 1 has the highest
+	for (int i = 0; i < WINNER_COUNT; i++) {
+		topScores[i] = { i, generation[i].score };
+	}
+	sort(topScores.begin(), topScores.end());
+
+	// Find the top WINNER_COUNT scoring individuals
+	for (int i = WINNER_COUNT; i < GENERATION_SIZE; i++) {
+		// Skip individual if it can't possibly be a winner
+		if (generation[i].score <= topScores[0].score) {
+			continue;
+		}
+
+		// If this individual is a potential winner
+		topScores[0] = { i, generation[i].score };
+		// Sort this potential winner into place in the winners list
+		for (int j = 0; j < WINNER_COUNT - 1; j++) {
+			if (topScores[j] > topScores[j + 1]) {
+				swap(topScores[j], topScores[j + 1]);
+			}
+		}
 	}
 
-	bool operator>(const winnerTracker& other) {
-		return score > other.score;
+	// Now the WINNER_COUNT winners have been found
+	// Copy them into the winners vector
+	for (int i = 0; i < WINNER_COUNT; i++) {
+		winners[i] = generation[topScores[i].idx];
 	}
-};
+
+	return winners;
+}
 
 void AITrainer::makeNextGen(vector<IndividualAIVals>& winners) {
 	// Reset all scores
@@ -24,35 +52,42 @@ void AITrainer::makeNextGen(vector<IndividualAIVals>& winners) {
 
 	/*** Creating the next generation of 45 AIs ***/
 	// First 6: the winners, just directly copied
-	
 	int genIdx = 0;
 	for (int i = 0; i < WINNER_COUNT; i++, genIdx++) {
 		generation[genIdx].weights = winners[i].weights;
 	}
 	
-	// Next 15: crosses between each winner, randomly chosen between avg and splitPick
+	// Next 15: crosses between each winner
+	// For each winner
 	for (int i = 0; i < WINNER_COUNT; i++) {
+		// For each winner the one chosen above hasn't been crossed with yet
 		for (int j = i+1; j < WINNER_COUNT; j++, genIdx++) {
+			// Choose how to cross them (avg vs splitPick)
 			vectorMixer* mixer = mixers[rand() % MIXER_COUNT];
+			// Cross them
 			(*mixer)(winners[i].weights, winners[j].weights, 
 				generation[genIdx].weights);
 
+			// Choose how much to randomize the new individual's weights
 			double strength = strengths[rand() % STRENGTH_COUNT];
+			// Randomize them
 			vecRandomizer(generation[genIdx].weights, strength);
 		}
 	}
 	
-	// Next 18: the winners with some random levels of strength
+	// Next 18: the winners with some randomization
 	for (int i = 0; i < WINNER_COUNT; i++) {
+		// Repeate each winner 3 times
 		for (int j = 0; j < 3; j++, genIdx++) {
 			generation[genIdx].weights = winners[i].weights;
 			
+			// Randomize the new individual's weights like before
 			double strength = strengths[rand() % STRENGTH_COUNT];
 			vecRandomizer(generation[genIdx].weights, strength);
 		}
 	}
 	
-	// Next 6: totally random
+	// Last 6: totally random weights
 	for (int i = 0; i < 6; i++, genIdx++) {
 		for (int wIdx = 0; wIdx < AI_FEATURE_COUNT; wIdx++) {
 			generation[genIdx].weights[wIdx] = rand() % 100;
@@ -61,96 +96,62 @@ void AITrainer::makeNextGen(vector<IndividualAIVals>& winners) {
 }
 
 
-vector<IndividualAIVals> AITrainer::findWinners() {
-	vector<IndividualAIVals> winners(WINNER_COUNT, IndividualAIVals());
-	
-	// Pairs are {individual index, individual score}
-	vector<winnerTracker> topScores(WINNER_COUNT, {0,0});
-
-	// Initialize the vector; index 0 has the lowest score, 
-	// index WINNER_COUNT - 1 has the highest
-	for (int i = 0; i < WINNER_COUNT; i++) {
-		topScores[i] = {i, generation[i].score};
-	}
-	sort(topScores.begin(), topScores.end());
-
-
-
-	// Find the top WINNER_COUNT scoring indivs
-	for (int i = WINNER_COUNT; i < GENERATION_SIZE; i++) {
-		// Skip a non-potential winner
-		if (generation[i].score <= topScores[0].score) {
-			continue;
-		}
-
-		// This indiv is a potential winner
-		topScores[0] = { i, generation[i].score };
-		// Sort this potential winner into place
-		for (int j = 0; j < WINNER_COUNT - 1; j++) {
-			if (topScores[j] > topScores[j + 1]) {
-				swap(topScores[j], topScores[j + 1]);
-			}
-		}
-	}
-
-	// Now the WINNER_COUNT winners have been found
-	// Copy the winners into the winners vector
-	for (int i = 0; i < WINNER_COUNT; i++) {
-		winners[i] = generation[topScores[i].idx];
-	}
-
-	return winners;
-}
-
-
-void AITrainer::runAITrainer(int epochs, bool doOutF, string outF) {
-	ofstream out = (doOutF) ? ofstream(outF) : ofstream();
-
-	for (int i = 0; i < epochs; i++) {
-		for (int j = 0; j < GENERATION_SIZE; j++) {
-			// Load weights and run
-			ai->weights = generation[j].weights;
-			ai->game->run<AI>(true, ai);
-
-			// Log score
-			generation[j].score = ai->game->userScore;
-
-			//cout << generation[j].score << endl;
-
-			ai->game->gameCount++;
-		}
-		//cout << endl << endl;
-
-		vector<IndividualAIVals> winners = findWinners();
-		if (doOutF) {
-			outputThisGen(out, winners);
-		}
-		cout << "Generation " << currGeneration << " done\n";
-
-
-		makeNextGen(winners);
-		currGeneration++;
-	}
-
-	out.close();
-}
-
+/*** DATA OUTPUT FUNCTION ***/
 void AITrainer::outputThisGen(ofstream& out, vector<IndividualAIVals>& winners) {
+	// Print generation #
 	out << "GENERATION " << currGeneration << "\n";
+
+	// Print generation scores
 	out << "All individual scores, in order:\n";
 	for (int i = 0; i < GENERATION_SIZE; i++) {
 		out << generation[i].score << " ";
 	}
 	out << "\n\n";
 
+	// Print winner scores and weights
 	out << "Winners scores | their weights (best on top):\n";
 	for (int i = 0; i < WINNER_COUNT; i++) {
 		out << winners[i].score << " | ";
-		
+
 		for (int j = 0; j < AI_FEATURE_COUNT; j++) {
 			out << winners[i].weights[j] << " ";
 		}
 		out << "\n";
 	}
 	out << "\n\n\n";
+}
+
+
+/*** DRIVER ***/
+void AITrainer::runAITrainer(int epochs, bool doOutF, string outF) {
+	// Initialize outstream
+	ofstream out = (doOutF) ? ofstream(outF) : ofstream();
+
+
+	for (int i = 0; i < epochs; i++) {
+		// For each individual
+		for (int j = 0; j < GENERATION_SIZE; j++) {
+			// Load weights and run
+			ai->weights = generation[j].weights;
+			ai->game->run<AI>(true, ai);
+
+			// Record score
+			generation[j].score = ai->game->userScore;
+		}
+
+		// Find and output winners, if necessary
+		vector<IndividualAIVals> winners = findWinners();
+		if (doOutF) {
+			outputThisGen(out, winners);
+		}
+		
+		// Tell the user how much progress has been made
+		cout << "Generation " << currGeneration << " done\n";
+
+		// Evolve the next generation
+		makeNextGen(winners);
+		currGeneration++;
+	}
+
+	out.close();
 }

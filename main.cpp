@@ -41,15 +41,16 @@ int main() {
 				getline(cin, aiMode);
 
 				if (aiMode == "1") {
+					gameAI.weights = { 0.132189, 4.77676, 27.2359, 9.85004, 30.868, 1.97888, 3.59599, 2.42627 };
+					// gameAI.weights = {0, 6.87562, 0, 0, 0, 6.84836, 0, 0 };
 					game.run<AI>(true, &gameAI);
 				}
 				else if (aiMode == "2") {
 					AITrainer trainer(&gameAI);
-
-					trainer.runAITrainer(100, true, "outputOvernight.txt");
+					trainer.runAITrainer(5, true, "Output_Logs/worstPoss.txt");
 				}
 				else if (aiMode == "3") {
-					cout << "Exited AI mode!\n";
+					cout << "Exited AI Mode!\n";
 					break;
 				}
 				else {
