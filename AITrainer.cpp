@@ -96,7 +96,7 @@ void AITrainer::makeNextGen(vector<IndividualAIVals>& winners) {
 }
 
 
-/*** DATA OUTPUT FUNCTION ***/
+/*** DATA OUTPUT FUNCTIONS ***/
 void AITrainer::outputThisGen(ofstream& out, vector<IndividualAIVals>& winners) {
 	// Print generation #
 	out << "GENERATION " << currGeneration << "\n";
@@ -109,7 +109,7 @@ void AITrainer::outputThisGen(ofstream& out, vector<IndividualAIVals>& winners) 
 	out << "\n\n";
 
 	// Print winner scores and weights
-	out << "Winners scores | their weights (best on top):\n";
+	out << "Winners scores | their weights (best on bottom):\n";
 	for (int i = 0; i < WINNER_COUNT; i++) {
 		out << winners[i].score << " | ";
 
@@ -121,26 +121,84 @@ void AITrainer::outputThisGen(ofstream& out, vector<IndividualAIVals>& winners) 
 	out << "\n\n\n";
 }
 
+void AITrainer::loadState(string inF) {
+	ifstream in(inF);
+
+	if (!in.is_open()) {
+		cout << "Error opening file. Quitting...\n";
+		return;
+	}
+
+	string junk;
+
+	// Get the generation #
+	in >> junk >> currGeneration;
+
+	// Don't mind the getline and >> mixing
+	for (int i = 0; i < 5; i++) {
+		getline(in, junk);
+	}
+	
+	// Load the weights
+	vector<IndividualAIVals> winners(WINNER_COUNT, IndividualAIVals());
+	for (int i = 0; i < WINNER_COUNT; i++) {
+		in >> junk >> junk;
+
+		for (int j = 0; j < AI_FEATURE_COUNT; j++) {
+			in >> winners[i].weights[j];
+		}
+	}
+
+	// Load the generation
+	makeNextGen(winners);
+
+	in.close();
+}
+
+void AITrainer::saveState(string outF) {
+	vector<IndividualAIVals> winners = findWinners();
+
+	ofstream finalOut = ofstream(outF);
+
+	if (!finalOut.is_open()) {
+		cout << "Error opening file. Quitting...\n";
+		return;
+	}
+
+	outputThisGen(finalOut, winners);
+	finalOut.close();
+}
+
 
 /*** DRIVER ***/
 void AITrainer::runAITrainer(int epochs, bool doOutF, string outF) {
 	// Initialize outstream
-	ofstream out = (doOutF) ? ofstream(outF) : ofstream();
+	ofstream out = ofstream();
+	if (doOutF) { 
+		out = ofstream(outF);
+	}
+	if (doOutF && !out.is_open()) {
+		cout << "Error opening file. Quitting...\n";
+		return;
+	}
 
-
+	// Run
+	vector<IndividualAIVals> winners;
 	for (int i = 0; i < epochs; i++) {
+		currGeneration++;
+
 		// For each individual
 		for (int j = 0; j < GENERATION_SIZE; j++) {
 			// Load weights and run
 			ai->weights = generation[j].weights;
-			ai->game->run<AI>(true, ai);
+			ai->game->run<AI>(true, ai, false);
 
 			// Record score
 			generation[j].score = ai->game->userScore;
 		}
 
 		// Find and output winners, if necessary
-		vector<IndividualAIVals> winners = findWinners();
+		winners = findWinners();
 		if (doOutF) {
 			outputThisGen(out, winners);
 		}
@@ -148,10 +206,10 @@ void AITrainer::runAITrainer(int epochs, bool doOutF, string outF) {
 		// Tell the user how much progress has been made
 		cout << "Generation " << currGeneration << " done\n";
 
-		// Evolve the next generation
-		makeNextGen(winners);
-		currGeneration++;
+		if (i < epochs - 1) {
+			// Evolve the next generation
+			makeNextGen(winners);
+		}
 	}
-
 	out.close();
 }

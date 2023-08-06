@@ -122,6 +122,14 @@ public:
 	/*** CONSTRUCTOR ***/
 	AI(Game* gameIn) : game(gameIn) {}
 
+	/*** STATE LOADER ***/
+	/*
+	* REQUIRES: inF is the path to a file output by AITrainer.saveState()
+	* MODIFIES: weights
+	* EFFECTS:	sets the weights to the best AI weights in the savestate.
+	*/
+	void loadTrainerState(string inF);
+
 
 	/*** OUTPUT ***/
 	/*

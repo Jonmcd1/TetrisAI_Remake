@@ -1,6 +1,29 @@
 #include "AI.h"
 using namespace std;
 
+/*** STATE LOADER ***/
+void AI::loadTrainerState(string inF) {
+	ifstream in(inF);
+
+	if (!in.is_open()) {
+		cout << "Error opening file. Quitting...\n";
+		return;
+	}
+
+	string junk;
+
+	// Deal with unneeded data
+	for (int i = 0; i < 10; i++) {
+		getline(in, junk);
+	}
+	in >> junk >> junk;
+
+	// Get needed data
+	for (int i = 0; i < AI_FEATURE_COUNT; i++) {
+		in >> weights[i];
+	}
+}
+
 
 /*** OUTPUT ***/
 char AI::makeMove() {

@@ -183,6 +183,26 @@ public:
 	*/
 	AITrainer(AI* aiIn) : ai(aiIn) {}
 
+
+	/*** DATA OUTPUT FUNCTIONS ***/
+	/*
+	* REQUIRES: inF is the path to a file output by AITrainer.saveState()
+	* MODIFIES: winners[i].weights
+	* EFFECTS:	Loads all winner weights from the savestate and uses them to
+	*			produce a new generation.
+	* CALLS:    makeNextGen
+	*/
+	void loadState(string inF);
+
+	/*
+	* REQUIRES:	outF is a valid file path
+	* MODIFIES:	outF's file
+	* EFFECTS:	See AITrainer.outputThisGen
+	* CALLS:	outputThisGen
+	*/
+	void saveState(string outF);
+
+
 	/*** DRIVER ***/
 	/*
 	* REQUIRES: this.ai is a valid AI pointer,

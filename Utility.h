@@ -54,10 +54,3 @@ void print3DMap(std::vector<std::vector<std::vector<T>>>& map) {
 }
 
 #endif
-
-/*
-* REQUIRES: 
-* MODIFIES: 
-* EFFECTS:	
-* CALLS:	
-*/

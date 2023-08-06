@@ -7,6 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <thread>
 #include "Utility.h"
 #include "Piece.h"
 using namespace std;
@@ -147,7 +148,7 @@ public:
 	*			processFilledLines, print, Piece.newPiece
 	*/
 	template <typename Mover>
-	void run(bool autoMode, Mover* autoMover = nullptr) {
+	void run(bool autoMode, Mover* autoMover = nullptr, bool printMode = true) {
 		reset();
 
 		// While the player hasn't lost yet
@@ -156,8 +157,8 @@ public:
 			currPiece.newPiece();
 
 			// Exit if the game is lost
-			if (!moveAllowed(0, 0, 0) || piecesPlaced > 2000) {
-				if (!autoMode) {
+			if (!moveAllowed(0, 0, 0) || piecesPlaced > 10000) {
+				if (printMode) {
 					cout << "\n\nGame Over!\n"
 						<< "-=+ Your final score: " << userScore
 						<< " +=-\n\n\n\n";
@@ -167,10 +168,14 @@ public:
 
 			// While the current piece hasn't been placed yet
 			while (true) {
+				if (printMode) {
+					print();
+					std::this_thread::sleep_for(100ms);
+				}
+
 				// Get the next move to make
 				string move;
 				if (!autoMode) {
-					print();
 					cout << "Your Move (S, L, R, D, T, or <anything else> to idle): ";
 					getline(cin, move);
 				}
